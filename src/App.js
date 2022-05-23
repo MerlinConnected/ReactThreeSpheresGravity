@@ -3,28 +3,40 @@ import { Canvas, extend, useFrame, useThree } from "@react-three/fiber"
 import { Physics, useSphere } from "@react-three/cannon"
 import { Effects as EffectComposer, Environment, Lightformer } from "@react-three/drei"
 import { SSAOPass } from "three-stdlib"
+import { useControls } from "leva"
 
 extend({ SSAOPass })
 
-const sphereGeometry = new THREE.SphereGeometry(1, 32, 32)
-const glassSphereGeometry = new THREE.SphereGeometry(1.25, 32, 32)
-const baubleMaterial = new THREE.MeshPhysicalMaterial({
-  color: "#0247e8",
-  roughness: 1,
-  metalness: 0,
-  side: THREE.DoubleSide,
-})
-const glassMaterial = new THREE.MeshPhysicalMaterial({
-  color: "#ffffff",
-  roughness: 0.65,
-  metalness: 0,
-  transmission: 1,
-  thickness: 0.1,
-  ior: 1.5,
-  side: THREE.DoubleSide,
-})
-
 function Spheres({ mat = new THREE.Matrix4(), vec = new THREE.Vector3(), ...props }) {
+  const sphereGeometry = new THREE.SphereGeometry(1, 32, 32)
+  const { sphereRoughness, color, sphereMetalness, envMapIntensity } = useControls({
+    sphereRoughness: {
+      value: 1,
+      min: 0,
+      max: 1,
+      step: 0.1,
+    },
+    sphereMetalness: {
+      value: 0,
+      min: 0,
+      max: 1,
+      step: 0.1,
+    },
+    envMapIntensity: {
+      value: 0,
+      min: 0,
+      max: 10,
+      step: 0.1,
+    },
+    color: "#0033ce",
+  })
+  const baubleMaterial = new THREE.MeshPhysicalMaterial({
+    color: color,
+    roughness: sphereRoughness,
+    metalness: sphereMetalness,
+    side: THREE.DoubleSide,
+    envMapIntensity: envMapIntensity,
+  })
   const [ref, api] = useSphere(() => ({
     type: "Dynamic",
     args: [1],
@@ -46,6 +58,41 @@ function Spheres({ mat = new THREE.Matrix4(), vec = new THREE.Vector3(), ...prop
 }
 
 function GlassSpheres({ mat = new THREE.Matrix4(), vec = new THREE.Vector3(), ...props }) {
+  const glassSphereGeometry = new THREE.SphereGeometry(1.25, 32, 32)
+  const { transmission, roughness, thickness, ior } = useControls({
+    transmission: {
+      value: 1,
+      min: 0,
+      max: 1,
+      step: 0.1,
+    },
+    roughness: {
+      value: 4,
+      min: 0,
+      max: 5,
+      step: 0.1,
+    },
+    thickness: {
+      value: 10,
+      min: 0,
+      max: 10,
+      step: 0.1,
+    },
+    ior: {
+      value: 1.1,
+      min: 1,
+      max: 10,
+      step: 0.1,
+    },
+  })
+  const glassMaterial = new THREE.MeshPhysicalMaterial({
+    color: "#ffffff",
+    roughness: roughness,
+    transmission: transmission,
+    thickness: thickness,
+    ior: ior,
+  })
+
   const [ref, api] = useSphere(() => ({
     type: "Dynamic",
     args: [1.25],
@@ -67,7 +114,7 @@ function GlassSpheres({ mat = new THREE.Matrix4(), vec = new THREE.Vector3(), ..
 }
 
 export const App = () => (
-  <Canvas shadows camera={{ position: [0, 0, 25], fov: 35, near: 1, far: 40 }}>
+  <Canvas dpr={[1, 2]} shadows camera={{ position: [0, 0, 25], fov: 35, near: 1, far: 40 }} linear={false}>
     <Environment>
       {/* Ceiling */}
       <Lightformer intensity={7} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
@@ -80,7 +127,7 @@ export const App = () => (
     <Physics gravity={[0, 3, 0]} iterations={10}>
       <Collisions />
       <Spheres />
-      <GlassSpheres />
+      {/* <GlassSpheres /> */}
     </Physics>
     <Effects />
   </Canvas>
